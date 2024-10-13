@@ -30,7 +30,7 @@ The **74HC595** has the following key pins:
 
 ### Connection Diagram
 
-![74HC595 Connection Diagram](https://example.com/74HC595-connection.png) <!-- Replace this link with an actual image link if available -->
+![74HC595 Connection Diagram](circuit.png) <!-- Replace this link with an actual image link if available -->
 
 ## Circuit Connection Example
 
