@@ -74,5 +74,5 @@ When `shiftOut()` is called, it serially sends the bits specified in the **value
 
 The **74HC595** shift register is a versatile component for expanding the number of outputs in embedded systems. By utilizing the `shiftOut()` function in Arduino, you can effectively control multiple outputs with just a few pins, enabling you to create complex and interactive projects.
 
-For further reading, please refer to the [74HC595 datasheet](https://www.ti.com/lit/ds/symlink/74hc595.pdf).
+For further reading, please refer to the [74HC595 datasheet](shiftRegister_74hc595_dataSheet.pdf).
 
