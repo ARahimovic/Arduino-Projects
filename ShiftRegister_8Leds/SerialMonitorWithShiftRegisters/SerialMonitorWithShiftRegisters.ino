@@ -25,8 +25,8 @@ void loop()
 
     // Take user input as a string
     String userInput = Serial.readStringUntil('\n'); // Read until newline
-    // Convert string to integer, trimming any non-numeric characters
     int val = userInput.toInt(); // Convert the string to an integer
+    // Convert string to integer, trimming any non-numeric characters
     if (val > 255 )
       val = 255;
 
