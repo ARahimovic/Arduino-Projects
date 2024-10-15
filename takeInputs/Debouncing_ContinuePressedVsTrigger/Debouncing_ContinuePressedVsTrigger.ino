@@ -11,15 +11,15 @@ struct Button
   // is trigger button or as long is pressed
   bool isTrigger;
   // function pointer
-  void(*action)();
+  void (*action)();
 };
 void Print()
 {
   Serial.println("button Pressed");
 }
 
-Button button1 = {input1, HIGH, 0, HIGH, true, Print};
-Button button2 = {input2, HIGH, 0, HIGH, false, Print};
+Button button1 = {input1, HIGH, HIGH, 0, true, Print};
+Button button2 = {input2, HIGH, HIGH, 0, false, Print};
 
 void setup()
 {
@@ -27,7 +27,8 @@ void setup()
   pinMode(input2, INPUT_PULLUP);
 
   Serial.begin(9600);
-  while (!Serial);
+  while (!Serial)
+    ;
 }
 
 void loop()
