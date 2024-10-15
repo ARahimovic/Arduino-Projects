@@ -32,14 +32,16 @@ void loop()
     // if the timer is greated than the bounce delay, it means the system stabilised
     if((millis() - bounceTimer) > debounceDelay)
     {
-        // Only change the button state if it has actually changed
+        // Only change the button state if it has actually changed // Triggers actions only when the button is pressed or released.
         if(lastStableButtonState != currentButtonReading)
         {
             lastStableButtonState = currentButtonReading;
             if(lastStableButtonState == LOW)                          // if we wanted the led to be on as long the button is pressed we change this part of the logic 
             {                                                            
-                ledState = !ledState;                                       
-                digitalWrite(led, ledState);                              /*
+                ledState = !ledState;                                       // we dont use the     if(lastStableButtonState != currentButtonReading)
+                digitalWrite(led, ledState);                                                                  //                        {
+                                                                              //  lastStableButtonState = currentButtonReading;
+                                         /*
                                                                           if(lastStableButtonState == LOW)                         
                                                                           {   
                                                                             digitalWrite(led,HIGH);
