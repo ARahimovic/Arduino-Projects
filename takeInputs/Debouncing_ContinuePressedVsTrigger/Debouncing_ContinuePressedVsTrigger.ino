@@ -8,46 +8,53 @@ struct Button
   int lastButtonReading;
   int lastButtonState;
   unsigned long bouncingTimer;
-  //is trigger button or as long is pressed
+  // is trigger button or as long is pressed
   bool isTrigger;
+  // function pointer
+  void(*action)();
 };
+void Print()
+{
+  Serial.println("button Pressed");
+}
 
-Button button1 = {input1, HIGH, 0, HIGH, true};
-Button button2 = {input2, HIGH, 0, HIGH, false};
+Button button1 = {input1, HIGH, 0, HIGH, true, Print};
+Button button2 = {input2, HIGH, 0, HIGH, false, Print};
 
-void setup() {
+void setup()
+{
   pinMode(input1, INPUT_PULLUP);
   pinMode(input2, INPUT_PULLUP);
 
   Serial.begin(9600);
-  while(!Serial);
-
+  while (!Serial);
 }
 
-void loop() {
+void loop()
+{
   checkButton(&button1);
   checkButton(&button2);
 }
 
 void checkButton(Button *btn)
 {
- int reading = digitalRead(btn->pin);
- if(reading != btn->lastButtonReading)
- {
+  int reading = digitalRead(btn->pin);
+  if (reading != btn->lastButtonReading)
+  {
     btn->bouncingTimer = millis();
     btn->lastButtonReading = reading;
- } 
+  }
 
- if((millis() - btn->bouncingTimer) > bouncingDelay)
- {
-    if(btn->isTrigger)
+  if ((millis() - btn->bouncingTimer) > bouncingDelay)
+  {
+    if (btn->isTrigger)
     {
-      if( reading != btn->lastButtonState)
+      if (reading != btn->lastButtonState)
       {
         btn->lastButtonState = reading;
-        if(reading == LOW)
+        if (reading == LOW)
         {
-          Serial.println("button pressed");
+          btn->action();
         }
         else
         {
@@ -55,14 +62,13 @@ void checkButton(Button *btn)
         }
       }
     }
-    //Check for continue pressing
+    // Check for continue pressing
     else
     {
-      if(reading == LOW)
-        {
-          Serial.println("button continuusly pressed");
-        }
+      if (reading == LOW)
+      {
+        btn->action();
+      }
     }
-
- }
+  }
 }
