@@ -27,8 +27,7 @@ void setup()
   pinMode(input2, INPUT_PULLUP);
 
   Serial.begin(9600);
-  while (!Serial)
-    ;
+  while (!Serial); 
 }
 
 void loop()
