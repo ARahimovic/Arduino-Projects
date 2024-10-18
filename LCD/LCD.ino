@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 #include <LiquidCrystal.h>
 
 const int columns = 16;
@@ -39,14 +38,4 @@ void loop() {
   // Print percentage with one decimal place and overwrite leftover chars
   lcd.print(percentage, 1);
   lcd.print("   "); // Clear any leftover characters
-=======
-void setup()
-{
-  // put your setup code here, to run once:
-}
-
-void loop()
-{
-  // put your main code here, to run repeatedly:
->>>>>>> 8d639a7e9f622188d45b325432a21b73ba7100bf
 }
