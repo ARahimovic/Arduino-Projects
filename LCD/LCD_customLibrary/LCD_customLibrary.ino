@@ -216,18 +216,67 @@ void noBackLight()
     digitalWrite(LCD_brightnessPin, LOW);
 }
 
+// the CGRAM adress goes from 0x00-0x3F (0 - 63) , it allows for 8 custom char, 8 * 8 = 64
+// instruction to set the CGRAM adress 0x01DDDDDD
+void createCustomChar(uint8_t  location, byte* customChar)
+{
+    location &=0x7; // to make sure it is between 0 and 7  
+    int adress = 0x40 | (location << 3);  // we multiply the location by 8 (shift by 3) to get the base adress of the custom char
+    sendCommand(adress);
+
+    for(int i =0; i < 8; i++)
+    {
+        //write each byte of the custom char in the appropriate adress
+        sendData(customChar[i]); 
+    }
+    setCursor(0,0);
+}
+
+void write(uint8_t val)
+{
+    //if val from 0 - 7 , write customChar, if not, write the corresponding ASCII char
+    sendData(val);
+}
+
+void scrollLeft(const char *str)
+{
+    int length = strlen(str);
+
+    for(int pos = 0; pos < length; pos++)
+    {
+        clear();
+        lcdPrint(str + pos);
+        delay(500);
+    }
+    lcdPrint(" ");
+
+}
 void setup()
 {
+    byte smiley[8] = 
+    {
+    0b00000,
+    0b01010,
+    0b00000,
+    0b00100,
+    0b00000,
+    0b10001,
+    0b01110,
+    0b00000,
+    };
     String str = "my Name is ";
     InitialiseLCD();
+    createCustomChar(0,smiley);
     // sendData('C');
     // lcdPrint("Hello");
+    write(byte(0));
     lcdPrint(str);
     setCursor(0, 1);
     lcdPrint(50);
     setCursor(8, 1);
     lcdPrint(2050);
 }
+
 
 void loop()
 {
