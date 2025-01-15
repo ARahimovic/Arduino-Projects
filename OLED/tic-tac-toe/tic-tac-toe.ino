@@ -21,7 +21,6 @@ const int refreshDelay = 100/refreshRate;
 bool boardNeedsUpdate = true;
 
 bool isPlayer1 = true;
-
 char board[3][3] ={
   {' ', ' ', 'O'},
   {'X', ' ', ' '},
@@ -40,10 +39,14 @@ void setup() {
   screenWidth = u8g2.getWidth();
   charXWidth = u8g2.getStrWidth("X");
   charOWidth = u8g2.getStrWidth("O");
+
+  drawBoard();
 }
 
 void drawBoard()
 {
+  u8g2.clearBuffer();
+
   //draw Horizontal Lines
   u8g2.drawLine(0, 0, 90, 0);
   u8g2.drawLine(0, 20, 90, 20);
@@ -82,35 +85,65 @@ void drawBoard()
       u8g2.drawStr(xPos,yPos, str);    
     }
   }
+
+  u8g2.drawStr(95,15,"Plr 1");
+  u8g2.drawStr(95,35,"Plr 2");
+  u8g2.sendBuffer();
+
+  boardNeedsUpdate = false;
 }
 
 void takeInput()
 {
-  char cell = ' ';
-  if(isPlayer1)
-    cell = 'X';
-  else
-    cell = 'O';
+  char cell = isPlayer1 ? 'X':'O';
+  while (Serial.available()) {
+    Serial.read(); // Clear any leftover characters
+  }
+
+  Serial.println("Player : ener postiion 1-9");
   
-  int row = Serial.parseInt();
-  int col = Serial.parseInt();
+  while(!Serial.available()); 
+  
+
+ if(Serial.available()){
+  //String input = Serial.readStringUntil('\n');
+  //input.trim();
+  //Serial.println(input);
+  char input = Serial.read();
+  int pos = input -'0';
+  Serial.println(pos);
+
+  if(pos < 1 || pos > 9)
+  {
+    Serial.println("Invalid position! Please enter 1-9");
+    return;
+  }
+
+  int row = (pos - 1)/ 3;
+  int col = (pos - 1) %3;
+
+  // Check if cell is occupied
+  if (board[row][col] != ' ') {
+    Serial.println("Position already taken! Try again.");
+    return;
+  }
 
   board[row][col] = cell;
-  
-  isPlayer1 != isPlayer1;
+  isPlayer1 = !isPlayer1;
+  boardNeedsUpdate = true;
+ }
+
 }
 void loop() {
   // put your main code here, to run repeatedly:
 
   // if(boardNeedsUpdate)
   // {
-    u8g2.clearBuffer();
-    takeInput();
+    
+if(boardNeedsUpdate)    
     drawBoard();
-    u8g2.drawStr(95,15,"Plr 1");
-    u8g2.drawStr(95,35,"Plr 2");
 
-    u8g2.sendBuffer();
+    takeInput();
     
     //u8g2.setCursor(90, screenHeight / 2);
     
