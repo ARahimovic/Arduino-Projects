@@ -40,6 +40,8 @@ void loop(void) {
   u8g2.drawLine((w - 1)/2, 0, (w - 1)/2, h - 1);
   u8g2.drawLine(0, (h - 1)/2, (w - 1), (h - 1)/2);
 
+  u8g2.setCursor(w/2, h/2);
+  u8g2.print("Hello World");
 
   u8g2.sendBuffer();  
       
