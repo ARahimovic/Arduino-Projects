@@ -12,8 +12,9 @@ int joystickPin = 9;
 int cursorX = 0;
 int cursorY = 0;
 const int deadzone = 300;
-const int delayCursor = 100; each 100 ms , take input
+const int delayCursor = 300; //each 100 ms , take input
 int previousCursorTime = 0;
+bool isCursorVisible = true;
 
 //U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 U8G2_SH1106_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
@@ -38,24 +39,29 @@ int charOWidth = 0;
 void updateCursorPosition()
 {
   int joyX = analogRead(A0);
-  int joyY = analogRead(A1);
+  //int joyY = analogRead(A1);
 
-  int mappedX = map(joyX, 0 , 1023, -1, 1);
-  int mappedY = map(joyY, 0 , 1023, -1, 1);
-  
-  cursorX += mappedX;
+  if(joyX > 800)
+    cursorX ++;
+  else if(joyX < 250)
+    cursorX --;
+
   if(cursorX > 2)
     cursorX = 0;
   else if (cursorX < 0)
      cursorX = 2;
-
-  cursorY += mappedY;
-  if(cursorY > 2)
-    cursorY = 0;
-  else if (cursorY < 0)
-     cursorY = 2;
   
-
+  // if(joyY > 800)
+  //   cursorY ++;
+  // else if (joyY < 250)
+  //   cursorY --;
+  // if(cursorY > 2)
+  //   cursorY = 0;
+  // else if (cursorY < 0)
+  //    cursorY = 2;
+  
+  //Serial.println(cursorX);
+  //Serial.println(cursorY);
 }
 
 void setup() {
@@ -98,6 +104,15 @@ void drawBoard()
         }
       }
     }
+
+    if (isCursorVisible && board[cursorY][cursorX] == ' ') {
+      int cursorXPos = cursorX * cellWidth + 5;
+      int cursorYPos = cursorY * cellHeight + 5;
+
+      
+      u8g2.drawBox(cursorXPos, cursorYPos, cellWidth - 10, cellHeight - 10);
+    }
+
     // Display player info
     u8g2.drawStr(95, 15, "Plr 1");
     u8g2.drawStr(95, 35, "Plr 2");
@@ -174,7 +189,7 @@ void takeInput()
     Serial.read(); // Clear any leftover characters
   }
 
-  Serial.println("Player : enter position 1-9");
+  //Serial.println("Player : enter position 1-9");
   
   if(!Serial.available()){return ;} 
   //while(!Serial.available());
@@ -271,9 +286,11 @@ void loop() {
   {
     previousCursorTime = millis();
     updateCursorPosition();
+    isCursorVisible = !isCursorVisible;
+    drawBoard();
   }
   
-  takeInput();
+  //takeInput();
 
   
 }
