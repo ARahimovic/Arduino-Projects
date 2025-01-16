@@ -8,7 +8,25 @@
 #include <Wire.h>
 #endif
 
-U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+int joystickPin = 9;
+int cursorX = 0;
+int cursorY = 0;
+const int deadzone = 300;
+const int delayCursor = 100; each 100 ms , take input
+int previousCursorTime = 0;
+
+//U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+U8G2_SH1106_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+
+bool isGameOver = false;
+bool isPlayer1 = true;
+
+char board[3][3] ={
+  {' ', ' ', ' '},
+  {' ', ' ', ' '},
+  {' ', ' ', ' '}
+};
+
 
 int screenWidth, screenHeight;
 const int cellWidth = 30;
@@ -16,25 +34,39 @@ const int cellHeight = 20;
 int charXWidth = 0;
 int charOWidth = 0;
 
-const int refreshRate = 60;
-const int refreshDelay = 100/refreshRate;
-bool boardNeedsUpdate = true;
 
-bool isPlayer1 = true;
-char board[3][3] ={
-  {' ', ' ', 'O'},
-  {'X', ' ', ' '},
-  {' ', 'X', 'O'}
-};
+void updateCursorPosition()
+{
+  int joyX = analogRead(A0);
+  int joyY = analogRead(A1);
+
+  int mappedX = map(joyX, 0 , 1023, -1, 1);
+  int mappedY = map(joyY, 0 , 1023, -1, 1);
+  
+  cursorX += mappedX;
+  if(cursorX > 2)
+    cursorX = 0;
+  else if (cursorX < 0)
+     cursorX = 2;
+
+  cursorY += mappedY;
+  if(cursorY > 2)
+    cursorY = 0;
+  else if (cursorY < 0)
+     cursorY = 2;
+  
+
+}
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("Enter row and column numbers separated by space:");
+
+  pinMode(joystickPin, INPUT_PULLUP);
   // put your setup code here, to run once:
   u8g2.begin();
   u8g2.clearBuffer();	
+//  u8g2.setFont(u8g2_font_6x10_tf);
   u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
-  //u8g2.setFont(u8g2_font_6x10_tf );
   screenHeight = u8g2.getHeight();
   screenWidth = u8g2.getWidth();
   charXWidth = u8g2.getStrWidth("X");
@@ -45,52 +77,94 @@ void setup() {
 
 void drawBoard()
 {
-  u8g2.clearBuffer();
 
-  //draw Horizontal Lines
-  u8g2.drawLine(0, 0, 90, 0);
-  u8g2.drawLine(0, 20, 90, 20);
-  u8g2.drawLine(0, 40, 90, 40);
-  u8g2.drawLine(0, 60, 90, 60);
-  // draw Vertical Lines
-  u8g2.drawLine(0, 0, 0, 60);
-  u8g2.drawLine(30, 0, 30, 60);
-  u8g2.drawLine(60, 0, 60, 60);
-  u8g2.drawLine(90, 0, 90, 60);
+  u8g2.firstPage(); // Start the page loop
+  do {
+    //Draw the grid
+    for (int i = 0; i <= 3; i++) {
+      u8g2.drawLine(0, i * cellHeight, 3 * cellWidth, i * cellHeight); // Horizontal lines
+      u8g2.drawLine(i * cellWidth, 0, i * cellWidth, 3 * cellHeight); // Vertical lines
+    }
+  
+    // Draw board contents
+    for (int row = 0; row < 3; row++) {
+      for (int col = 0; col < 3; col++) {
+        char ch = board[row][col];
+        if (ch != ' ') {
+          int xPos = (col * cellWidth) + (cellWidth - u8g2.getStrWidth(&ch)) / 2;
+          int yPos = (row * cellHeight) + cellHeight - (cellHeight - u8g2.getAscent()) / 2;
+          char str[2] = {ch, '\0'};
+          u8g2.drawStr(xPos, yPos, str);
+        }
+      }
+    }
+    // Display player info
+    u8g2.drawStr(95, 15, "Plr 1");
+    u8g2.drawStr(95, 35, "Plr 2");
 
-  for(int i = 0; i < 3; i++)
+  } while (u8g2.nextPage()); 
+
+}
+
+bool isDraw()
+{
+  for(int i =0; i <3; i++)
   {
-    for(int j=0; j <3; j++)
+    for(int j =0; j<3; j++)
     {
-      int strWidth = charXWidth;
-      char ch = ' ';
-      if(board[i][j] == 'X')
-      {
-         strWidth = charXWidth;
-         ch = 'X';
-      }
-      else if(board[i][j] == 'O')
-      {
-        strWidth = charOWidth;
-        ch = 'O';
-      }
-      else
-      {
-        ch =' ';
-      }
+      if(board[i][j] == ' ')
+        return false;
+    }
+  }
+  return true;
+}
 
-      int xPos = (cellWidth - strWidth)/2 + j *  cellWidth;
-      int yPos = cellHeight-((cellHeight-u8g2.getAscent())/2) + i * cellHeight;
-      char str[2] = {ch, '\0'};
-      u8g2.drawStr(xPos,yPos, str);    
+bool isWin(int x, int y)
+{
+  //check row
+  for(int i =0; i <3; i++)
+  {
+    if(board[i][y] != board[x][y])
+      break;
+
+    if (i == 2)
+      return true;
+  }
+
+  //check column
+  for(int i =0; i<3; i++)
+  {
+    if(board[x][i] != board[x][y])
+      break;
+    if(i == 2)
+      return true;
+  }
+
+  //check diagonal
+  if(x == y)
+  {
+    for(int i =0; i <3; i++)
+    {
+      if(board[i][i] != board[x][y])
+        break;
+      if(i == 2)
+        return true;
     }
   }
 
-  u8g2.drawStr(95,15,"Plr 1");
-  u8g2.drawStr(95,35,"Plr 2");
-  u8g2.sendBuffer();
-
-  boardNeedsUpdate = false;
+  //check anti-diagonal
+  if(x + y == 2)
+  {
+    for(int i =0; i <3; i++)
+    {
+      if(board[x][y] != board[i][2-i])
+        break;
+      if(i == 2)
+        return true;
+    }
+  }
+//if all checks dont work, it is not a win condition
+  return false;
 }
 
 void takeInput()
@@ -100,15 +174,13 @@ void takeInput()
     Serial.read(); // Clear any leftover characters
   }
 
-  Serial.println("Player : ener postiion 1-9");
+  Serial.println("Player : enter position 1-9");
   
-  while(!Serial.available()); 
-  
+  if(!Serial.available()){return ;} 
+  //while(!Serial.available());
 
  if(Serial.available()){
-  //String input = Serial.readStringUntil('\n');
-  //input.trim();
-  //Serial.println(input);
+
   char input = Serial.read();
   int pos = input -'0';
   Serial.println(pos);
@@ -129,27 +201,79 @@ void takeInput()
   }
 
   board[row][col] = cell;
+  //draw the board after each input
+  drawBoard();
+  
+  //check if there is a win or draw
+  if(isWin(row, col))
+  {
+    drawWinBoard();
+    isGameOver = true;
+    return;
+  }
+  else if (isDraw())
+  {
+    drawDrawBoard();
+    isGameOver = true;
+    return;
+  }
+
   isPlayer1 = !isPlayer1;
-  boardNeedsUpdate = true;
+
  }
 
 }
+
+void drawWinBoard()
+{
+    char *str = isPlayer1 ?"player 1 (X)" : "Player 2 (O)"; 
+    u8g2.firstPage();
+    do
+    {
+    u8g2.drawStr(0, screenHeight / 2, str);
+    u8g2.drawStr(u8g2.getStrWidth(str), screenHeight / 2, " WON");
+
+    }while (u8g2.nextPage()); 
+}
+
+void drawDrawBoard()
+{
+    u8g2.firstPage();
+    do
+    {
+    u8g2.drawStr(0, screenHeight / 2, "It is a Draw");
+    }while (u8g2.nextPage()); 
+}
+
+void restartGame()
+{
+  for(int i =0; i <3; i++)
+  {
+    for(int j =0; j<3; j++)
+    {
+      board[i][j] = ' ';
+    }
+  }
+
+  isGameOver = false;
+  isPlayer1 = true;
+
+  drawBoard();
+}
 void loop() {
-  // put your main code here, to run repeatedly:
+  if(isGameOver)
+  {
+    delay(5000);
+    restartGame();
+  }
 
-  // if(boardNeedsUpdate)
-  // {
-    
-if(boardNeedsUpdate)    
-    drawBoard();
-
-    takeInput();
-    
-    //u8g2.setCursor(90, screenHeight / 2);
-    
-    //boardNeedsUpdate = false;
-  // }  
-
+  if(millis() - previousCursorTime > delayCursor)
+  {
+    previousCursorTime = millis();
+    updateCursorPosition();
+  }
   
+  takeInput();
+
   
 }
